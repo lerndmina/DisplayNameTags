@@ -89,6 +89,8 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
 
         this.plugin.reloadConfig();
 
+        final boolean showSelf = plugin.getConfig().getBoolean("show-self", false);
+
         for (final Player player : Bukkit.getOnlinePlayers()) {
             final NameTagEntity tag = plugin.getEntityManager().removeEntity(player);
 
@@ -98,20 +100,23 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
 
             final NameTagEntity newTag = plugin.getEntityManager().getOrCreateNameTagEntity(player);
 
-            // Add existing viewers
-            if (tag != null) {
-                for (final UUID viewer : tag.getPassenger().getViewers()) {
-                    newTag.getPassenger().addViewer(viewer);
-
-                    // Send passenger packet
-                    Player playerViewer = Bukkit.getPlayer(viewer);
-                    if (playerViewer != null) {
-                        newTag.sendPassengerPacket(playerViewer);
-                    }
+            // Add all online players in the same world as viewers
+            for (final Player viewer : Bukkit.getOnlinePlayers()) {
+                if (viewer.equals(player) && !showSelf) {
+                    continue; // Skip self unless show-self is enabled
                 }
+                
+                if (!viewer.getWorld().equals(player.getWorld())) {
+                    continue; // Skip players in different worlds
+                }
+
+                newTag.getPassenger().addViewer(viewer.getUniqueId());
+                newTag.sendPassengerPacket(viewer);
             }
 
             newTag.updateVisibility();
+            // Refresh to send metadata to viewers immediately (fixes invisible nametags after reload)
+            newTag.getPassenger().refresh();
         }
     }
 

@@ -98,17 +98,18 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
 
             final NameTagEntity newTag = plugin.getEntityManager().getOrCreateNameTagEntity(player);
 
-            // Add existing viewers
-            if (tag != null) {
-                for (final UUID viewer : tag.getPassenger().getViewers()) {
-                    newTag.getPassenger().addViewer(viewer);
-
-                    // Send passenger packet
-                    Player playerViewer = Bukkit.getPlayer(viewer);
-                    if (playerViewer != null) {
-                        newTag.sendPassengerPacket(playerViewer);
-                    }
+            // Add all online players in the same world as viewers
+            for (final Player viewer : Bukkit.getOnlinePlayers()) {
+                if (viewer.equals(player) && !plugin.getConfig().getBoolean("show-self", false)) {
+                    continue; // Skip self unless show-self is enabled
                 }
+                
+                if (!viewer.getWorld().equals(player.getWorld())) {
+                    continue; // Skip players in different worlds
+                }
+
+                newTag.getPassenger().addViewer(viewer.getUniqueId());
+                newTag.sendPassengerPacket(viewer);
             }
 
             newTag.updateVisibility();

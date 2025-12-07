@@ -48,6 +48,11 @@ public class ConfigDefaultsListener implements Listener {
         long refreshMillis = plugin.getConfig().getLong("defaults.refresh-every", 50);
 
         if (refreshMillis == 0L) {
+            // Re-enable notifications before returning
+            event.getNameTag()
+                .getPassenger()
+                .getEntityMeta()
+                .setNotifyAboutChanges(true);
             return;
         }
 

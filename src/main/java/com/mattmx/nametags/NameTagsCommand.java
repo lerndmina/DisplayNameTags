@@ -115,6 +115,8 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
             }
 
             newTag.updateVisibility();
+            // Refresh to send metadata to viewers immediately (fixes invisible nametags after reload)
+            newTag.getPassenger().refresh();
         }
     }
 

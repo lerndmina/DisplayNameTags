@@ -27,7 +27,8 @@ public class PlayServerSpawnEntityHandler {
         final NameTags plugin = NameTags.getInstance();
         final WrapperPlayServerSpawnEntity packet = new WrapperPlayServerSpawnEntity(event);
 
-        if (packet.getUUID().isEmpty()) return;
+        if (packet.getUUID().isEmpty())
+            return;
 
         final UUID packetUUID = packet.getUUID().get();
         final NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntityByUUID(packetUUID);
@@ -52,7 +53,8 @@ public class PlayServerSpawnEntityHandler {
         }
 
         // Add passenger and send to player after (off the netty thread)
-        event.getTasksAfterSend().add(() -> plugin.getExecutor().execute(() -> attachPassengerToEntity(nameTagEntity, user)));
+        event.getTasksAfterSend()
+                .add(() -> plugin.getExecutor().execute(() -> attachPassengerToEntity(nameTagEntity, user)));
     }
 
     private static void attachPassengerToEntity(final NameTagEntity nameTagEntity, final User receiver) {

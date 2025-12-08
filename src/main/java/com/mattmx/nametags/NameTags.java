@@ -61,12 +61,11 @@ public class NameTags extends JavaPlugin {
         registerMetrics();
 
         executor = Executors.newFixedThreadPool(
-            getConfig().getInt("options.threads", 2),
-            new ThreadFactoryBuilder()
-                .setPriority(Thread.NORM_PRIORITY + 1)
-                .setNameFormat("NameTags-Processor")
-                .build()
-        );
+                getConfig().getInt("options.threads", 2),
+                new ThreadFactoryBuilder()
+                        .setPriority(Thread.NORM_PRIORITY + 1)
+                        .setNameFormat("NameTags-Processor")
+                        .build());
 
         SpigotEntityLibPlatform platform = new SpigotEntityLibPlatform(this);
         APIConfig settings = new APIConfig(PacketEvents.getAPI()).usePlatformLogger();
@@ -76,7 +75,7 @@ public class NameTags extends JavaPlugin {
         final PacketEventsAPI<?> packetEvents = PacketEvents.getAPI();
 
         packetEvents.getEventManager().registerListener(packetListener);
-//        packetEvents.getEventManager().registerListener(new GlowingEffectHook());
+        // packetEvents.getEventManager().registerListener(new GlowingEffectHook());
 
         NeznamyTABHook.inject(this);
         SkinRestorerHook.inject(this);
@@ -110,7 +109,7 @@ public class NameTags extends JavaPlugin {
 
         String textFormatterIdentifier = getConfig().getString("formatter", "minimessage");
         formatter = TextFormatter.getById(textFormatterIdentifier)
-            .orElse(TextFormatter.MINI_MESSAGE);
+                .orElse(TextFormatter.MINI_MESSAGE);
 
         getLogger().info("Using " + formatter.name() + " as text formatter.");
 
@@ -121,13 +120,15 @@ public class NameTags extends JavaPlugin {
 
         ConfigurationSection groups = getConfig().getConfigurationSection("groups");
 
-        if (groups == null) return;
+        if (groups == null)
+            return;
 
         for (String key : groups.getKeys(false)) {
             String permissionNode = "nametags.groups." + key;
             ConfigurationSection sub = groups.getConfigurationSection(key);
 
-            if (sub == null) continue;
+            if (sub == null)
+                continue;
 
             this.groups.put(permissionNode, sub);
 
@@ -136,7 +137,8 @@ public class NameTags extends JavaPlugin {
     }
 
     public void registerMetrics() {
-        metrics.addCustomChart(new DrilldownPie("serverName", () -> Map.of(Bukkit.getName(), Map.of(Bukkit.getName(), 1))));
+        metrics.addCustomChart(
+                new DrilldownPie("serverName", () -> Map.of(Bukkit.getName(), Map.of(Bukkit.getName(), 1))));
     }
 
     @Override
@@ -146,8 +148,8 @@ public class NameTags extends JavaPlugin {
         HandlerList.unregisterAll(this.eventsListener);
 
         PacketEvents.getAPI()
-            .getEventManager()
-            .unregisterListener(this.packetListener);
+                .getEventManager()
+                .unregisterListener(this.packetListener);
     }
 
     public Executor getExecutor() {

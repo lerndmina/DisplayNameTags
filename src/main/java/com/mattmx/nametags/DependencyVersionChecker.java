@@ -12,20 +12,20 @@ public class DependencyVersionChecker {
         final PacketEventsAPI<?> api = PacketEvents.getAPI();
 
         PEVersion currentPEVersion = api.getVersion();
-        ServerVersion outdatedMCVersion = ServerVersion.V_1_21_4;
+        ServerVersion outdatedMCVersion = ServerVersion.V_1_21_10;
 
-        boolean isOutdated = currentPEVersion.isOlderThan(new PEVersion(2, 8, 0));
+        boolean isOutdated = currentPEVersion.isOlderThan(new PEVersion(2, 10, 1));
         boolean isUnsupported = api.getServerManager().getVersion().isNewerThan(outdatedMCVersion);
 
         if (isOutdated && isUnsupported) {
             NameTags.getInstance().getComponentLogger().warn(Component.text(String.format("""
-                
-                ⚠ Detected PacketEvents version %s, which does not support Minecraft versions newer than %s!
-                
-                Please update to the latest PacketEvents release to ensure compatibility.
-                Download it here: https://modrinth.com/plugin/packetevents
-                
-                """, currentPEVersion.toStringWithoutSnapshot(), outdatedMCVersion.getReleaseName())));
+
+                    ⚠ Detected PacketEvents version %s, which does not support Minecraft versions newer than %s!
+
+                    Please update to the latest PacketEvents release to ensure compatibility.
+                    Download it here: https://modrinth.com/plugin/packetevents
+
+                    """, currentPEVersion.toStringWithoutSnapshot(), outdatedMCVersion.getReleaseName())));
         }
     }
 }

@@ -25,7 +25,8 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            @NotNull String[] args) {
         // SHUT UP EVA
 
         if (args.length == 0) {
@@ -42,19 +43,22 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                             .append(
                                     Component.text("Total NameTags: " + plugin.getEntityManager().getCacheSize())
                                             .hoverEvent(HoverEvent.showText(
-                                                    Component.text("By Entity UUID: " + plugin.getEntityManager().getCacheSize())
+                                                    Component
+                                                            .text("By Entity UUID: "
+                                                                    + plugin.getEntityManager().getCacheSize())
                                                             .appendNewline()
-                                                            .append(Component.text("By Entity ID: " + plugin.getEntityManager().getEntityIdMapSize()))
+                                                            .append(Component.text("By Entity ID: "
+                                                                    + plugin.getEntityManager().getEntityIdMapSize()))
                                                             .appendNewline()
-                                                            .append(Component.text("By Passenger ID: " + plugin.getEntityManager().getPassengerIdMapSize()))
-                                            ))
-                                            .color(NamedTextColor.WHITE)
-                            )
+                                                            .append(Component.text("By Passenger ID: " + plugin
+                                                                    .getEntityManager().getPassengerIdMapSize()))))
+                                            .color(NamedTextColor.WHITE))
                             .appendNewline()
                             .append(
-                                    Component.text("Cached last sent passengers: " + plugin.getEntityManager().getLastSentPassengersSize())
-                                            .color(NamedTextColor.WHITE)
-                            )
+                                    Component
+                                            .text("Cached last sent passengers: "
+                                                    + plugin.getEntityManager().getLastSentPassengersSize())
+                                            .color(NamedTextColor.WHITE))
                             .appendNewline()
                             .append(
                                     Component.text("Viewers:")
@@ -65,14 +69,13 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                                                                     plugin.getEntityManager()
                                                                             .getAllEntities()
                                                                             .stream()
-                                                                            .map((nameTag) -> " - " + nameTag.getBukkitEntity().getUniqueId() + ": " + nameTag.getPassenger().getViewers())
-                                                                            .toList()
-                                                            )
-                                                    )
-                                            )
-                            )
-                            .color(NamedTextColor.GOLD)
-            );
+                                                                            .map((nameTag) -> " - " + nameTag
+                                                                                    .getBukkitEntity().getUniqueId()
+                                                                                    + ": "
+                                                                                    + nameTag.getPassenger()
+                                                                                            .getViewers())
+                                                                            .toList()))))
+                            .color(NamedTextColor.GOLD));
         }
 
         return false;
@@ -105,24 +108,32 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                 if (viewer.equals(player) && !showSelf) {
                     continue; // Skip self unless show-self is enabled
                 }
-                
+
                 if (!viewer.getWorld().equals(player.getWorld())) {
                     continue; // Skip players in different worlds
                 }
 
+                // Update location before adding viewers to ensure correct position
+                newTag.updateLocation();
+
+                // Remove and re-add viewer to ensure spawn packets are sent fresh
+                // (mirrors the behavior in
+                // PlayServerSpawnEntityHandler.attachPassengerToEntity)
+                newTag.getPassenger().removeViewer(viewer.getUniqueId());
                 newTag.getPassenger().addViewer(viewer.getUniqueId());
                 newTag.sendPassengerPacket(viewer);
             }
 
             newTag.updateVisibility();
-            // Refresh to send metadata to viewers immediately (fixes invisible nametags after reload)
+            // Refresh to send metadata to viewers immediately (fixes invisible nametags
+            // after reload)
             newTag.getPassenger().refresh();
         }
     }
 
-
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+            @NotNull String label, @NotNull String @NotNull [] args) {
         String lastArg = args.length >= 1 ? args[0].toLowerCase() : "";
         return Stream.of("reload", "debug")
                 .filter((arg) -> arg.toLowerCase().startsWith(lastArg))

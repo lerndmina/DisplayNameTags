@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,43 +23,55 @@ public class ConfigDefaultsListener implements Listener {
         this.plugin = plugin;
 
         NameTags.getInstance()
-            .getEntityManager()
-            .setDefaultProvider(((entity, meta) -> {
-                meta.setUseDefaultBackground(false);
-                meta.setTransformationInterpolationDuration(5);
-                meta.setPositionRotationInterpolationDuration(5);
-                TextDisplayMetaConfiguration.applyMeta(defaultSection(), meta);
-            }));
+                .getEntityManager()
+                .setDefaultProvider(((entity, meta) -> {
+                    meta.setUseDefaultBackground(false);
+                    meta.setTransformationInterpolationDuration(5);
+                    meta.setPositionRotationInterpolationDuration(5);
+                    TextDisplayMetaConfiguration.applyMeta(defaultSection(), meta);
+                }));
     }
 
-    private ConfigurationSection defaultSection() {
+    private @Nullable ConfigurationSection defaultSection() {
         return plugin.getConfig().getConfigurationSection("defaults");
     }
 
     @EventHandler
     public void onCreate(@NotNull NameTagEntityCreateEvent event) {
-        if (!(event.getNameTag().getBukkitEntity() instanceof Player player)) return;
+        if (!(event.getNameTag().getBukkitEntity() instanceof Player player))
+            return;
 
         // By default, we shouldn't notify until we have finished processing.
         event.getNameTag()
-            .getPassenger()
-            .getEntityMeta()
-            .setNotifyAboutChanges(false);
+                .getPassenger()
+                .getEntityMeta()
+                .setNotifyAboutChanges(false);
 
         long refreshMillis = plugin.getConfig().getLong("defaults.refresh-every", 50);
 
         if (refreshMillis == 0L) {
+            // Re-enable notifications when not using refresh trait
+            event.getNameTag()
+                    .getPassenger()
+                    .getEntityMeta()
+                    .setNotifyAboutChanges(true);
             return;
         }
 
         registerDefaultRefreshListener(event.getNameTag(), refreshMillis);
+
+        // Re-enable notifications after setup is complete - this flushes pending
+        // changes
+        event.getNameTag()
+                .getPassenger()
+                .getEntityMeta()
+                .setNotifyAboutChanges(true);
     }
 
     public void registerDefaultRefreshListener(@NotNull NameTagEntity tag, long refreshMillis) {
         Player player = (Player) tag.getBukkitEntity();
 
-        tag.getTraits().getOrAddTrait(RefreshTrait.class, () ->
-            RefreshTrait.ofMillis(
+        tag.getTraits().getOrAddTrait(RefreshTrait.class, () -> RefreshTrait.ofMillis(
                 plugin,
                 refreshMillis,
                 (entity) -> {
@@ -67,11 +80,11 @@ public class ConfigDefaultsListener implements Listener {
 
                     // TODO we should cache this stuff
                     List<Map.Entry<String, ConfigurationSection>> groups = plugin.getGroups()
-                        .entrySet()
-                        .stream()
-                        .filter((e) -> player.hasPermission(e.getKey()))
-                        .sorted(GroupPriorityComparator.get())
-                        .toList();
+                            .entrySet()
+                            .stream()
+                            .filter((e) -> player.hasPermission(e.getKey()))
+                            .sorted(GroupPriorityComparator.get())
+                            .toList();
 
                     long recentRefreshEvery = plugin.getConfig().getLong("defaults.refresh-every", 50);
                     if (!groups.isEmpty()) {
@@ -99,14 +112,12 @@ public class ConfigDefaultsListener implements Listener {
                     // Preserve background color for sneaking
                     // Maybe we should introduce an `afterRefresh` callback?
                     entity.getTraits()
-                        .getTrait(SneakTrait.class)
-                        .ifPresent(SneakTrait::manuallyUpdateSneakingOpacity);
+                            .getTrait(SneakTrait.class)
+                            .ifPresent(SneakTrait::manuallyUpdateSneakingOpacity);
 
                     entity.updateVisibility();
                     entity.getPassenger().refresh();
-                }
-            )
-        );
+                }));
     }
 
 }

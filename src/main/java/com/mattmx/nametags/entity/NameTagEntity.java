@@ -49,7 +49,7 @@ public class NameTagEntity {
 
     public boolean isInvisible() {
         boolean hasInvisibilityEffect = bukkitEntity instanceof LivingEntity e
-            && e.hasPotionEffect(PotionEffectType.INVISIBILITY);
+                && e.hasPotionEffect(PotionEffectType.INVISIBILITY);
 
         return bukkitEntity.isInvisible() || hasInvisibilityEffect;
     }
@@ -60,11 +60,16 @@ public class NameTagEntity {
 
     public void updateVisibility(final boolean isInvisible) {
         modify((meta) -> {
+            // Use the meta's invisibility flag to track if we've hidden the nametag
             if (isInvisible && !meta.isInvisible()) {
+                // Going invisible: cache view range, set to 0, mark as invisible
                 this.cachedViewRange = meta.getViewRange();
                 meta.setViewRange(0f);
+                meta.setInvisible(true);
             } else if (!isInvisible && meta.isInvisible()) {
+                // Becoming visible: restore cached view range, mark as visible
                 meta.setViewRange(this.cachedViewRange);
+                meta.setInvisible(false);
             }
         });
     }
@@ -83,25 +88,25 @@ public class NameTagEntity {
 
     public void sendPassengerPacket(Player target) {
         PacketEvents.getAPI()
-            .getPlayerManager()
-            .sendPacket(target, getPassengersPacket());
+                .getPlayerManager()
+                .sendPacket(target, getPassengersPacket());
     }
 
     public PacketWrapper<?> getPassengersPacket() {
         int[] previousPackets = NameTags.getInstance()
-            .getEntityManager()
-            .getLastSentPassengers(getBukkitEntity().getEntityId())
-            .orElseGet(() -> {
-                int[] bukkitPassengers = this.bukkitEntity.getPassengers()
-                    .stream()
-                    .mapToInt(Entity::getEntityId)
-                    .toArray();
+                .getEntityManager()
+                .getLastSentPassengers(getBukkitEntity().getEntityId())
+                .orElseGet(() -> {
+                    int[] bukkitPassengers = this.bukkitEntity.getPassengers()
+                            .stream()
+                            .mapToInt(Entity::getEntityId)
+                            .toArray();
 
-                int[] passengers = Arrays.copyOf(bukkitPassengers, bukkitPassengers.length + 1);
-                passengers[passengers.length - 1] = getPassenger().getEntityId();
+                    int[] passengers = Arrays.copyOf(bukkitPassengers, bukkitPassengers.length + 1);
+                    passengers[passengers.length - 1] = getPassenger().getEntityId();
 
-                return passengers;
-            });
+                    return passengers;
+                });
 
         return new WrapperPlayServerSetPassengers(bukkitEntity.getEntityId(), previousPackets);
     }

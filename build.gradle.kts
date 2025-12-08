@@ -36,6 +36,7 @@ dependencies {
     compileOnly(libs.tab)
     compileOnly(libs.packetevents)
     compileOnly(libs.skinsrestorer)
+    compileOnly(libs.supervanish)
 
     // Downloaded during runtime
     compileOnly(libs.caffeine)

@@ -7,6 +7,7 @@ import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity;
 import com.mattmx.nametags.NameTags;
 import com.mattmx.nametags.entity.NameTagEntity;
+import com.mattmx.nametags.hook.VanishHook;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,15 @@ public class PlayServerSpawnEntityHandler {
     }
 
     private static void attachPassengerToEntity(final NameTagEntity nameTagEntity, final User receiver) {
+        // Check if the nametag owner is vanished from the receiver
+        if (nameTagEntity.getBukkitEntity() instanceof Player target) {
+            Player viewer = Bukkit.getPlayer(receiver.getUUID());
+            if (viewer != null && !VanishHook.canSee(viewer, target)) {
+                // Viewer can't see the vanished player, don't show nametag
+                return;
+            }
+        }
+
         // To avoid name tag moving when being added
         nameTagEntity.updateLocation();
 

@@ -8,6 +8,7 @@ import com.mattmx.nametags.config.TextFormatter;
 import com.mattmx.nametags.entity.NameTagEntityManager;
 import com.mattmx.nametags.hook.NeznamyTABHook;
 import com.mattmx.nametags.hook.SkinRestorerHook;
+import com.mattmx.nametags.hook.VanishEventListener;
 import com.mattmx.nametags.utils.test.TestPlaceholderExpansion;
 import me.tofaa.entitylib.APIConfig;
 import me.tofaa.entitylib.EntityLib;
@@ -79,6 +80,7 @@ public class NameTags extends JavaPlugin {
 
         NeznamyTABHook.inject(this);
         SkinRestorerHook.inject(this);
+        VanishEventListener.inject(this);
 
         Bukkit.getPluginManager().registerEvents(eventsListener, this);
         Bukkit.getScheduler().runTaskLater(this, DependencyVersionChecker::checkPacketEventsVersion, 10L);

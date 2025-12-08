@@ -1,6 +1,7 @@
 package com.mattmx.nametags;
 
 import com.mattmx.nametags.entity.NameTagEntity;
+import com.mattmx.nametags.hook.VanishHook;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -111,6 +112,11 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
 
                 if (!viewer.getWorld().equals(player.getWorld())) {
                     continue; // Skip players in different worlds
+                }
+
+                // Skip if player is vanished and viewer can't see them
+                if (!VanishHook.canSee(viewer, player)) {
+                    continue;
                 }
 
                 // Update location before adding viewers to ensure correct position

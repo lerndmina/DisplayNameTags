@@ -11,6 +11,7 @@ skinsrestorer = "15.9.0"
 caffeine = "3.2.0"
 entitylib = "2.4.11"
 bstats = "3.1.0"
+supervanish = "6.2.18-3"
 
 junit-jupiter = "5.13.0"
 
@@ -24,6 +25,7 @@ skinsrestorer = { module = "net.skinsrestorer:skinsrestorer-api", version.ref = 
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 entitylib = { module = "com.github.Tofaa2.EntityLib:spigot", version.ref = "entitylib" }
 bstats = { group = "org.bstats", name = "bstats-bukkit", version.ref = "bstats" }
+supervanish = { module = "com.github.LeonMangler:SuperVanish", version.ref = "supervanish" }
 
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
 

@@ -11,6 +11,8 @@ softdepend:
   - PlaceholderAPI
   - TAB
   - SkinsRestorer
+  - SuperVanish
+  - PremiumVanish
 
 libraries:
   - com.github.ben-manes.caffeine:caffeine:3.2.0

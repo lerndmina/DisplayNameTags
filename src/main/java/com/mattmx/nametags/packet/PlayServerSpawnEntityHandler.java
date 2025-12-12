@@ -67,6 +67,12 @@ public class PlayServerSpawnEntityHandler {
             }
         }
 
+        // Check if the entity is invisible (e.g., from invisibility potion)
+        // Don't show nametag if they're invisible (vanilla behavior)
+        if (nameTagEntity.isInvisible()) {
+            return;
+        }
+
         // To avoid name tag moving when being added
         nameTagEntity.updateLocation();
 

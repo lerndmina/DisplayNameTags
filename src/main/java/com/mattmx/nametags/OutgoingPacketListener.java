@@ -35,7 +35,8 @@ public class OutgoingPacketListener extends PacketListenerAbstract {
                 for (int entityId : packet.getEntityIds()) {
                     NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntityById(entityId);
 
-                    if (nameTagEntity == null) continue;
+                    if (nameTagEntity == null)
+                        continue;
 
                     nameTagEntity.getPassenger().removeViewer(event.getUser());
                 }
@@ -44,11 +45,14 @@ public class OutgoingPacketListener extends PacketListenerAbstract {
                 // TODO per-player impl (teams may be able to see invisible players)
                 final WrapperPlayServerEntityEffect packet = new WrapperPlayServerEntityEffect(event);
 
-                if (packet.getPotionType() != PotionTypes.INVISIBILITY) return;
+                if (packet.getPotionType() != PotionTypes.INVISIBILITY)
+                    return;
 
-                final NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntityById(packet.getEntityId());
+                final NameTagEntity nameTagEntity = plugin.getEntityManager()
+                        .getNameTagEntityById(packet.getEntityId());
 
-                if (nameTagEntity == null) return;
+                if (nameTagEntity == null)
+                    return;
 
                 nameTagEntity.updateVisibility(true);
             }
@@ -56,13 +60,26 @@ public class OutgoingPacketListener extends PacketListenerAbstract {
                 // TODO per-player impl (teams may be able to see invisible players)
                 final WrapperPlayServerRemoveEntityEffect packet = new WrapperPlayServerRemoveEntityEffect(event);
 
-                if (packet.getPotionType() != PotionTypes.INVISIBILITY) return;
+                if (packet.getPotionType() != PotionTypes.INVISIBILITY)
+                    return;
 
-                final NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntityById(packet.getEntityId());
+                final NameTagEntity nameTagEntity = plugin.getEntityManager()
+                        .getNameTagEntityById(packet.getEntityId());
 
-                if (nameTagEntity == null) return;
+                if (nameTagEntity == null)
+                    return;
 
                 nameTagEntity.updateVisibility(false);
+
+                // Re-add the viewer who received this packet since they may not have the
+                // nametag
+                // if the entity was invisible when they first spawned it
+                event.getTasksAfterSend().add(() -> plugin.getExecutor().execute(() -> {
+                    nameTagEntity.updateLocation();
+                    nameTagEntity.getPassenger().removeViewer(event.getUser());
+                    nameTagEntity.getPassenger().addViewer(event.getUser());
+                    event.getUser().sendPacket(nameTagEntity.getPassengersPacket());
+                }));
             }
             default -> {
             }

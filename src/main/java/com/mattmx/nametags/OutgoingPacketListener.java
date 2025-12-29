@@ -71,14 +71,14 @@ public class OutgoingPacketListener extends PacketListenerAbstract {
 
                 nameTagEntity.updateVisibility(false);
 
-                // Re-add the viewer who received this packet since they may not have the
-                // nametag
-                // if the entity was invisible when they first spawned it
+                // Add the viewer if they don't already have the nametag
+                // (e.g., if the entity was invisible when they first spawned it)
                 event.getTasksAfterSend().add(() -> plugin.getExecutor().execute(() -> {
-                    nameTagEntity.updateLocation();
-                    nameTagEntity.getPassenger().removeViewer(event.getUser());
-                    nameTagEntity.getPassenger().addViewer(event.getUser());
-                    event.getUser().sendPacket(nameTagEntity.getPassengersPacket());
+                    if (!nameTagEntity.getPassenger().getViewers().contains(event.getUser().getUUID())) {
+                        nameTagEntity.updateLocation();
+                        nameTagEntity.getPassenger().addViewer(event.getUser());
+                        event.getUser().sendPacket(nameTagEntity.getPassengersPacket());
+                    }
                 }));
             }
             default -> {

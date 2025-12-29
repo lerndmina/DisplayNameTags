@@ -21,6 +21,9 @@ import java.util.function.BiConsumer;
 
 public class NameTagEntityManager {
 
+    // Set of player UUIDs whose nametags are disabled by an admin
+    private final Set<UUID> disabledNameTags = ConcurrentHashMap.newKeySet();
+
     private final Cache<UUID, NameTagEntity> nameTagCache = Caffeine.newBuilder()
         .expireAfterAccess(Duration.ofMinutes(1))
         .removalListener(this::handleRemoval)
@@ -121,6 +124,43 @@ public class NameTagEntityManager {
 
     public int getLastSentPassengersSize() {
         return lastSentPassengers.size();
+    }
+
+    /**
+     * Check if a player's nametag is disabled by an admin.
+     * @param uuid The player's UUID
+     * @return true if the nametag is disabled
+     */
+    public boolean isNameTagDisabled(@NotNull UUID uuid) {
+        return disabledNameTags.contains(uuid);
+    }
+
+    /**
+     * Toggle a player's nametag on or off.
+     * @param uuid The player's UUID
+     * @return true if the nametag is now disabled, false if enabled
+     */
+    public boolean toggleNameTag(@NotNull UUID uuid) {
+        if (disabledNameTags.contains(uuid)) {
+            disabledNameTags.remove(uuid);
+            return false;
+        } else {
+            disabledNameTags.add(uuid);
+            return true;
+        }
+    }
+
+    /**
+     * Set whether a player's nametag is disabled.
+     * @param uuid The player's UUID
+     * @param disabled true to disable, false to enable
+     */
+    public void setNameTagDisabled(@NotNull UUID uuid, boolean disabled) {
+        if (disabled) {
+            disabledNameTags.add(uuid);
+        } else {
+            disabledNameTags.remove(uuid);
+        }
     }
 
     private void handleRemoval(UUID uuid, NameTagEntity tagEntity, RemovalCause cause) {

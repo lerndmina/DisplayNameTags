@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public class SneakTrait extends Trait {
     private int previousBackgroundOpacity = 0;
     private byte previousTextOpacity = Byte.MAX_VALUE;
+    private boolean previousSeeThrough = false;
     private boolean isSneaking = false;
 
     public void manuallyUpdateSneakingOpacity() {
@@ -16,6 +17,8 @@ public class SneakTrait extends Trait {
             Color currentColor = Color.fromARGB(tag.getBackgroundColor());
             tag.setBackgroundColor(withCustomSneakOpacity(currentColor).asARGB());
             tag.setTextOpacity((byte) getCustomOpacity());
+            // Ensure see-through is disabled when sneaking
+            tag.setSeeThrough(false);
         });
     }
 
@@ -27,13 +30,17 @@ public class SneakTrait extends Trait {
             if (sneaking) {
                 previousBackgroundOpacity = color.getAlpha();
                 previousTextOpacity = meta.getTextOpacity();
+                previousSeeThrough = meta.isSeeThrough();
 
                 // Not sure if this is vanilla behavior? Does only text opacity change??
                 meta.setBackgroundColor(withCustomSneakOpacity(color).asARGB());
                 meta.setTextOpacity((byte) getCustomOpacity());
+                // Disable see-through when sneaking so nametag doesn't show through walls
+                meta.setSeeThrough(false);
             } else {
                 meta.setBackgroundColor(color.setAlpha(previousBackgroundOpacity).asARGB());
                 meta.setTextOpacity(previousTextOpacity);
+                meta.setSeeThrough(previousSeeThrough);
             }
         });
         getTag().getPassenger().refresh();

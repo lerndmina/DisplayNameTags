@@ -58,6 +58,13 @@ public class PlayServerSpawnEntityHandler {
     }
 
     private static void attachPassengerToEntity(final NameTagEntity nameTagEntity, final User receiver) {
+        final NameTags plugin = NameTags.getInstance();
+
+        // Check if the nametag is disabled by an admin
+        if (plugin.getEntityManager().isNameTagDisabled(nameTagEntity.getBukkitEntity().getUniqueId())) {
+            return;
+        }
+
         // Check if the nametag owner is vanished from the receiver
         if (nameTagEntity.getBukkitEntity() instanceof Player target) {
             Player viewer = Bukkit.getPlayer(receiver.getUUID());

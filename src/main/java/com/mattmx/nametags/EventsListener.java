@@ -3,11 +3,14 @@ package com.mattmx.nametags;
 import com.mattmx.nametags.entity.NameTagEntity;
 import com.mattmx.nametags.entity.trait.SneakTrait;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 import org.spigotmc.event.player.PlayerSpawnLocationEvent;
 
@@ -133,5 +136,27 @@ public class EventsListener implements Listener {
         nameTagEntity.getTraits()
             .getOrAddTrait(SneakTrait.class, SneakTrait::new)
             .updateSneak(event.isSneaking());
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPotionEffect(@NotNull EntityPotionEffectEvent event) {
+        // Only handle invisibility effect changes on players
+        if (!(event.getEntity() instanceof Player player)) return;
+
+        // Check if this is an invisibility effect change
+        boolean isInvisibilityChange = 
+            (event.getOldEffect() != null && event.getOldEffect().getType().equals(PotionEffectType.INVISIBILITY)) ||
+            (event.getNewEffect() != null && event.getNewEffect().getType().equals(PotionEffectType.INVISIBILITY));
+
+        if (!isInvisibilityChange) return;
+
+        NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntity(player);
+        if (nameTagEntity == null) return;
+
+        // Delay the visibility update slightly to ensure the effect has been applied
+        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+            nameTagEntity.updateVisibility();
+            nameTagEntity.getPassenger().refresh();
+        }, 1L);
     }
 }

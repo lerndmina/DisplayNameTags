@@ -14,9 +14,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
 
 public class NameTagsCommand implements CommandExecutor, TabCompleter {
     private final @NotNull NameTags plugin;
@@ -37,6 +36,54 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
         if (args[0].equalsIgnoreCase("reload")) {
             reload();
             sender.sendMessage(Component.text("Reloaded!").color(NamedTextColor.GREEN));
+        } else if (args[0].equalsIgnoreCase("toggle")) {
+            if (!sender.hasPermission("nametags.admin.toggle")) {
+                sender.sendMessage(Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
+                return true;
+            }
+
+            if (args.length < 2) {
+                sender.sendMessage(Component.text("Usage: /nametags toggle <player>").color(NamedTextColor.RED));
+                return true;
+            }
+
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) {
+                sender.sendMessage(Component.text("Player not found.").color(NamedTextColor.RED));
+                return true;
+            }
+
+            boolean nowDisabled = plugin.getEntityManager().toggleNameTag(target.getUniqueId());
+            NameTagEntity tag = plugin.getEntityManager().getNameTagEntity(target);
+
+            if (tag != null) {
+                if (nowDisabled) {
+                    // Hide the nametag from all viewers
+                    tag.getPassenger().despawn();
+                } else {
+                    // Show the nametag again
+                    tag.getPassenger().spawn(tag.updateLocation());
+                    tag.updateVisibility();
+                    // Re-add viewers and send passenger packets
+                    for (final Player viewer : Bukkit.getOnlinePlayers()) {
+                        if (viewer.equals(target) && !plugin.getConfig().getBoolean("show-self", false)) {
+                            continue;
+                        }
+                        if (!viewer.getWorld().equals(target.getWorld())) {
+                            continue;
+                        }
+                        if (!VanishHook.canSee(viewer, target)) {
+                            continue;
+                        }
+                        tag.getPassenger().addViewer(viewer.getUniqueId());
+                        tag.sendPassengerPacket(viewer);
+                    }
+                    tag.getPassenger().refresh();
+                }
+            }
+
+            sender.sendMessage(Component.text(target.getName() + "'s nametag is now " + (nowDisabled ? "disabled" : "enabled") + ".").color(nowDisabled ? NamedTextColor.RED : NamedTextColor.GREEN));
+            return true;
         } else if (args[0].equalsIgnoreCase("debug")) {
             sender.sendMessage(
                     Component.text("NameTags debug")
@@ -140,9 +187,28 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
             @NotNull String label, @NotNull String @NotNull [] args) {
-        String lastArg = args.length >= 1 ? args[0].toLowerCase() : "";
-        return Stream.of("reload", "debug")
-                .filter((arg) -> arg.toLowerCase().startsWith(lastArg))
-                .toList();
+        if (args.length == 1) {
+            String lastArg = args[0].toLowerCase();
+            List<String> completions = new ArrayList<>();
+            for (String cmd : new String[]{"reload", "debug", "toggle"}) {
+                if (cmd.startsWith(lastArg)) {
+                    if (cmd.equals("toggle") && !sender.hasPermission("nametags.admin.toggle")) {
+                        continue;
+                    }
+                    completions.add(cmd);
+                }
+            }
+            return completions;
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
+            if (!sender.hasPermission("nametags.admin.toggle")) {
+                return List.of();
+            }
+            String lastArg = args[1].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase().startsWith(lastArg))
+                    .toList();
+        }
+        return List.of();
     }
 }

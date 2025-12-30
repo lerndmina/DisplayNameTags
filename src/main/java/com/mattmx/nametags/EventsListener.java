@@ -32,22 +32,22 @@ public class EventsListener implements Listener {
             }
 
             plugin.getEntityManager()
-                .getOrCreateNameTagEntity(event.getPlayer())
-                .updateVisibility();
+                    .getOrCreateNameTagEntity(event.getPlayer())
+                    .updateVisibility();
         });
     }
 
-//    @EventHandler
-//    public void onEntityRemove(@NotNull EntityRemoveFromWorldEvent event) {
-//        plugin.getEntityManager().removeLastSentPassengersCache(event.getEntity().getEntityId());
-//
-//        NameTagEntity entity = plugin.getEntityManager()
-//            .removeEntity(event.getEntity());
-//
-//        if (entity != null) {
-//            entity.destroy();
-//        }
-//    }
+    // @EventHandler
+    // public void onEntityRemove(@NotNull EntityRemoveFromWorldEvent event) {
+    // plugin.getEntityManager().removeLastSentPassengersCache(event.getEntity().getEntityId());
+    //
+    // NameTagEntity entity = plugin.getEntityManager()
+    // .removeEntity(event.getEntity());
+    //
+    // if (entity != null) {
+    // entity.destroy();
+    // }
+    // }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
@@ -70,7 +70,8 @@ public class EventsListener implements Listener {
     public void onPlayerChangeWorld(@NotNull PlayerChangedWorldEvent event) {
         NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntity(event.getPlayer());
 
-        if (nameTagEntity == null) return;
+        if (nameTagEntity == null)
+            return;
 
         nameTagEntity.updateLocation();
 
@@ -81,13 +82,13 @@ public class EventsListener implements Listener {
         }
     }
 
-
     @EventHandler
     public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
         NameTagEntity nameTagEntity = plugin.getEntityManager()
-            .getNameTagEntity(event.getPlayer());
+                .getNameTagEntity(event.getPlayer());
 
-        if (nameTagEntity == null) return;
+        if (nameTagEntity == null)
+            return;
 
         if (plugin.getConfig().getBoolean("show-self", false)) {
             // Hides/removes tag on death/respawn screen
@@ -98,16 +99,19 @@ public class EventsListener implements Listener {
     @EventHandler
     public void onPlayerRespawn(@NotNull PlayerRespawnEvent event) {
         NameTagEntity nameTagEntity = plugin.getEntityManager()
-            .getNameTagEntity(event.getPlayer());
+                .getNameTagEntity(event.getPlayer());
 
-        if (nameTagEntity == null) return;
+        if (nameTagEntity == null)
+            return;
 
         if (plugin.getConfig().getBoolean("show-self", false)) {
 
             String respawnWorld = event.getRespawnLocation().getWorld().getName();
             String playerWorld = event.getPlayer().getWorld().getName();
-            // Ignoring since same action is handled at EventListener#onPlayerChangeWorld if player was killed in another world.
-            if (!playerWorld.equalsIgnoreCase(respawnWorld)) return;
+            // Ignoring since same action is handled at EventListener#onPlayerChangeWorld if
+            // player was killed in another world.
+            if (!playerWorld.equalsIgnoreCase(respawnWorld))
+                return;
 
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 // Update entity location.
@@ -126,36 +130,65 @@ public class EventsListener implements Listener {
             return;
         }
 
-        if (event.getPlayer().isInsideVehicle()) return;
+        if (event.getPlayer().isInsideVehicle())
+            return;
 
         NameTagEntity nameTagEntity = plugin.getEntityManager()
-            .getNameTagEntity(event.getPlayer());
+                .getNameTagEntity(event.getPlayer());
 
-        if (nameTagEntity == null) return;
+        if (nameTagEntity == null)
+            return;
 
         nameTagEntity.getTraits()
-            .getOrAddTrait(SneakTrait.class, SneakTrait::new)
-            .updateSneak(event.isSneaking());
+                .getOrAddTrait(SneakTrait.class, SneakTrait::new)
+                .updateSneak(event.isSneaking());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPotionEffect(@NotNull EntityPotionEffectEvent event) {
         // Only handle invisibility effect changes on players
-        if (!(event.getEntity() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof Player player))
+            return;
 
         // Check if this is an invisibility effect change
-        boolean isInvisibilityChange = 
-            (event.getOldEffect() != null && event.getOldEffect().getType().equals(PotionEffectType.INVISIBILITY)) ||
-            (event.getNewEffect() != null && event.getNewEffect().getType().equals(PotionEffectType.INVISIBILITY));
+        boolean isInvisibilityChange = (event.getOldEffect() != null
+                && event.getOldEffect().getType().equals(PotionEffectType.INVISIBILITY)) ||
+                (event.getNewEffect() != null && event.getNewEffect().getType().equals(PotionEffectType.INVISIBILITY));
 
-        if (!isInvisibilityChange) return;
+        if (!isInvisibilityChange)
+            return;
 
         NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntity(player);
-        if (nameTagEntity == null) return;
+        if (nameTagEntity == null)
+            return;
+
+        // Check if this is gaining or losing invisibility
+        boolean gainingInvisibility = event.getNewEffect() != null
+                && event.getNewEffect().getType().equals(PotionEffectType.INVISIBILITY);
 
         // Delay the visibility update slightly to ensure the effect has been applied
         Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             nameTagEntity.updateVisibility();
+
+            // If losing invisibility, we need to re-add viewers since they may have been
+            // skipped
+            // (e.g., if nametag was toggled on while invisible)
+            if (!gainingInvisibility && !plugin.getEntityManager().isNameTagDisabled(player.getUniqueId())) {
+                boolean showSelf = plugin.getConfig().getBoolean("show-self", false);
+                for (final Player viewer : Bukkit.getOnlinePlayers()) {
+                    if (viewer.equals(player) && !showSelf) {
+                        continue;
+                    }
+                    if (!viewer.getWorld().equals(player.getWorld())) {
+                        continue;
+                    }
+                    if (!nameTagEntity.getPassenger().getViewers().contains(viewer.getUniqueId())) {
+                        nameTagEntity.getPassenger().addViewer(viewer.getUniqueId());
+                        nameTagEntity.sendPassengerPacket(viewer);
+                    }
+                }
+            }
+
             nameTagEntity.getPassenger().refresh();
         }, 1L);
     }

@@ -72,6 +72,12 @@ public class VanishEventListener implements Listener {
     if (shownTag == null)
       return;
 
+    // Don't show nametag if it's admin-disabled or player is invisible
+    if (plugin.getEntityManager().isNameTagDisabled(shownPlayer.getUniqueId()))
+      return;
+    if (shownTag.isInvisible())
+      return;
+
     boolean showSelf = plugin.getConfig().getBoolean("show-self", false);
 
     // Add all online players who can now see the player back as viewers

@@ -25,9 +25,9 @@ public class NameTagEntityManager {
     private final Set<UUID> disabledNameTags = ConcurrentHashMap.newKeySet();
 
     private final Cache<UUID, NameTagEntity> nameTagCache = Caffeine.newBuilder()
-        .expireAfterAccess(Duration.ofMinutes(1))
-        .removalListener(this::handleRemoval)
-        .build();
+            .expireAfterAccess(Duration.ofMinutes(1))
+            .removalListener(this::handleRemoval)
+            .build();
 
     private final ConcurrentHashMap<Integer, NameTagEntity> nameTagEntityByEntityId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, NameTagEntity> nameTagEntityByPassengerEntityId = new ConcurrentHashMap<>();
@@ -44,9 +44,8 @@ public class NameTagEntityManager {
         NameTagEntity tagEntity = nameTagCache.get(entity.getUniqueId(), uuid -> {
             NameTagEntity newlyCreated = new NameTagEntity(entity);
 
-            newlyCreated.getPassenger().consumeEntityMeta(TextDisplayMeta.class, meta ->
-                defaultProvider.accept(entity, meta)
-            );
+            newlyCreated.getPassenger().consumeEntityMeta(TextDisplayMeta.class,
+                    meta -> defaultProvider.accept(entity, meta));
 
             Bukkit.getPluginManager().callEvent(new NameTagEntityCreateEvent(newlyCreated));
 
@@ -55,7 +54,8 @@ public class NameTagEntityManager {
 
             return newlyCreated;
         });
-        return Objects.requireNonNull(tagEntity, "Cache.get(…) unexpectedly returned null for UUID " + entity.getUniqueId());
+        return Objects.requireNonNull(tagEntity,
+                "Cache.get(…) unexpectedly returned null for UUID " + entity.getUniqueId());
     }
 
     public @Nullable NameTagEntity removeEntity(@NotNull Entity entity) {
@@ -128,6 +128,7 @@ public class NameTagEntityManager {
 
     /**
      * Check if a player's nametag is disabled by an admin.
+     * 
      * @param uuid The player's UUID
      * @return true if the nametag is disabled
      */
@@ -137,6 +138,7 @@ public class NameTagEntityManager {
 
     /**
      * Toggle a player's nametag on or off.
+     * 
      * @param uuid The player's UUID
      * @return true if the nametag is now disabled, false if enabled
      */
@@ -152,7 +154,8 @@ public class NameTagEntityManager {
 
     /**
      * Set whether a player's nametag is disabled.
-     * @param uuid The player's UUID
+     * 
+     * @param uuid     The player's UUID
      * @param disabled true to disable, false to enable
      */
     public void setNameTagDisabled(@NotNull UUID uuid, boolean disabled) {
@@ -164,7 +167,8 @@ public class NameTagEntityManager {
     }
 
     private void handleRemoval(UUID uuid, NameTagEntity tagEntity, RemovalCause cause) {
-        if (cause != RemovalCause.EXPIRED || tagEntity == null) return;
+        if (cause != RemovalCause.EXPIRED || tagEntity == null)
+            return;
 
         Entity entity = tagEntity.getBukkitEntity();
 

@@ -11,7 +11,8 @@ public class SneakTrait extends Trait {
     private boolean isSneaking = false;
 
     public void manuallyUpdateSneakingOpacity() {
-        if (!isSneaking()) return;
+        if (!isSneaking())
+            return;
 
         getTag().modify((tag) -> {
             Color currentColor = Color.fromARGB(tag.getBackgroundColor());
@@ -56,8 +57,8 @@ public class SneakTrait extends Trait {
 
     public int getCustomOpacity() {
         return NameTags.getInstance()
-            .getConfig()
-            .getInt("sneak.opacity", 70);
+                .getConfig()
+                .getInt("sneak.opacity", 70);
     }
 
     public boolean isSneaking() {

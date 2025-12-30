@@ -38,7 +38,8 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Reloaded!").color(NamedTextColor.GREEN));
         } else if (args[0].equalsIgnoreCase("toggle")) {
             if (!sender.hasPermission("nametags.admin.toggle")) {
-                sender.sendMessage(Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
+                sender.sendMessage(
+                        Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
                 return true;
             }
 
@@ -64,6 +65,17 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                     // Show the nametag again
                     tag.getPassenger().spawn(tag.updateLocation());
                     tag.updateVisibility();
+
+                    // If the player is invisible (potion) or vanished, don't add viewers yet
+                    // The nametag will be shown automatically when they become visible
+                    // via the potion effect listener or when vanish is toggled off
+                    if (tag.isInvisible()) {
+                        sender.sendMessage(Component
+                                .text(target.getName() + "'s nametag is now enabled (but hidden due to invisibility).")
+                                .color(NamedTextColor.YELLOW));
+                        return true;
+                    }
+
                     // Re-add viewers and send passenger packets
                     for (final Player viewer : Bukkit.getOnlinePlayers()) {
                         if (viewer.equals(target) && !plugin.getConfig().getBoolean("show-self", false)) {
@@ -72,6 +84,7 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                         if (!viewer.getWorld().equals(target.getWorld())) {
                             continue;
                         }
+                        // Skip if target is vanished from this viewer
                         if (!VanishHook.canSee(viewer, target)) {
                             continue;
                         }
@@ -82,7 +95,9 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
                 }
             }
 
-            sender.sendMessage(Component.text(target.getName() + "'s nametag is now " + (nowDisabled ? "disabled" : "enabled") + ".").color(nowDisabled ? NamedTextColor.RED : NamedTextColor.GREEN));
+            sender.sendMessage(Component
+                    .text(target.getName() + "'s nametag is now " + (nowDisabled ? "disabled" : "enabled") + ".")
+                    .color(nowDisabled ? NamedTextColor.RED : NamedTextColor.GREEN));
             return true;
         } else if (args[0].equalsIgnoreCase("debug")) {
             sender.sendMessage(
@@ -190,7 +205,7 @@ public class NameTagsCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             String lastArg = args[0].toLowerCase();
             List<String> completions = new ArrayList<>();
-            for (String cmd : new String[]{"reload", "debug", "toggle"}) {
+            for (String cmd : new String[] { "reload", "debug", "toggle" }) {
                 if (cmd.startsWith(lastArg)) {
                     if (cmd.equals("toggle") && !sender.hasPermission("nametags.admin.toggle")) {
                         continue;

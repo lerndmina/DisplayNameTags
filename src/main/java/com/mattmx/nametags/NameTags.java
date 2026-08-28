@@ -99,6 +99,7 @@ public class NameTags extends JavaPlugin {
         VanishEventListener.inject(this);
 
         Bukkit.getPluginManager().registerEvents(eventsListener, this);
+        Bukkit.getPluginManager().registerEvents(new com.mattmx.nametags.packet.TameableInteractionFix(), this);
         Bukkit.getScheduler().runTaskLater(this, DependencyVersionChecker::checkPacketEventsVersion, 10L);
 
         Objects.requireNonNull(Bukkit.getPluginCommand("nametags")).setExecutor(new NameTagsCommand(this));

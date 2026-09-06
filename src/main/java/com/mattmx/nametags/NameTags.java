@@ -4,6 +4,8 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.mattmx.nametags.bubble.BubbleChatListener;
+import com.mattmx.nametags.bubble.BubbleManager;
 import com.mattmx.nametags.config.ConfigDefaultsListener;
 import com.mattmx.nametags.config.PluginConditionals;
 import com.mattmx.nametags.config.TextFormatter;
@@ -53,7 +55,9 @@ public class NameTags extends JavaPlugin {
     private @NotNull HeartBar.Settings heartBarSettings = HeartBar.Settings.DEFAULTS;
     private @NotNull NameTagVisibilityProvider visibilityProvider = PermissiveNameTagVisibilityProvider.INSTANCE;
     private NameTagEntityManager entityManager;
+    private BubbleManager bubbleManager;
     private EventsListener eventsListener;
+    private BubbleChatListener bubbleChatListener;
     private OutgoingPacketListener packetListener;
     private Metrics metrics;
     private @Nullable ConfigDefaultsListener defaultsListener = null;
@@ -67,7 +71,9 @@ public class NameTags extends JavaPlugin {
         instance = this;
 
         entityManager = new NameTagEntityManager();
+        bubbleManager = new BubbleManager(this);
         eventsListener = new EventsListener(this);
+        bubbleChatListener = new BubbleChatListener(this);
         packetListener = new OutgoingPacketListener(this);
 
         saveDefaultConfig();
@@ -99,6 +105,7 @@ public class NameTags extends JavaPlugin {
         VanishEventListener.inject(this);
 
         Bukkit.getPluginManager().registerEvents(eventsListener, this);
+        Bukkit.getPluginManager().registerEvents(bubbleChatListener, this);
         Bukkit.getPluginManager().registerEvents(new com.mattmx.nametags.packet.TameableInteractionFix(), this);
         Bukkit.getScheduler().runTaskLater(this, DependencyVersionChecker::checkPacketEventsVersion, 10L);
 
@@ -116,6 +123,8 @@ public class NameTags extends JavaPlugin {
         // Periodic viewer reconciliation — keeps nametag viewers aligned with
         // the current visibility policy and catches missed transitions.
         Bukkit.getScheduler().runTaskTimer(this, this::reconcileViewers, 20L, 20L);
+
+        bubbleManager.start();
     }
 
     @Override
@@ -177,12 +186,15 @@ public class NameTags extends JavaPlugin {
     public void onDisable() {
         metrics.shutdown();
 
+        bubbleManager.shutdown();
+
         // Destroy all nametag entities to prevent orphaned text displays
         for (NameTagEntity entity : entityManager.getAllEntities()) {
             entity.destroy();
         }
 
         HandlerList.unregisterAll(this.eventsListener);
+        HandlerList.unregisterAll(this.bubbleChatListener);
 
         PacketEvents.getAPI()
                 .getEventManager()
@@ -199,6 +211,15 @@ public class NameTags extends JavaPlugin {
 
     public @NotNull NameTagEntityManager getEntityManager() {
         return this.entityManager;
+    }
+
+    /**
+     * Chat speech bubbles. Other plugins can call
+     * {@link BubbleManager#show(Player, net.kyori.adventure.text.Component)} on this to put an
+     * arbitrary line above a player's head.
+     */
+    public @NotNull BubbleManager getBubbleManager() {
+        return this.bubbleManager;
     }
 
     public boolean canViewerSeeNametag(@NotNull Player viewer, @NotNull NameTagEntity tag) {
@@ -250,11 +271,14 @@ public class NameTags extends JavaPlugin {
         }
         tag.getPassenger().removeViewer(viewer.getUniqueId());
         tag.getPassenger().addViewer(viewer.getUniqueId());
+        // Spawn the bubble before the passenger packet references its entity id.
+        bubbleManager.addViewer(tag, viewer);
         tag.sendPassengerPacket(viewer);
     }
 
     public void hideTagFromViewer(@NotNull NameTagEntity tag, @NotNull Player viewer) {
         tag.getPassenger().removeViewer(viewer.getUniqueId());
+        bubbleManager.removeViewer(tag.getBukkitEntity().getUniqueId(), viewer.getUniqueId());
         SpectatorHead head = tag.getStandin();
         if (head != null && head.hasViewer(viewer.getUniqueId())) {
             head.removeViewer(viewer.getUniqueId());

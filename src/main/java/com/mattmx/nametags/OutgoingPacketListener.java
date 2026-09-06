@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class OutgoingPacketListener extends PacketListenerAbstract {
     private final @NotNull NameTags plugin;
@@ -36,12 +37,22 @@ public class OutgoingPacketListener extends PacketListenerAbstract {
                 WrapperPlayServerDestroyEntities packet = new WrapperPlayServerDestroyEntities(event);
 
                 for (int entityId : packet.getEntityIds()) {
+                    // The client is dropping a bubble entity of ours, so stop counting this
+                    // player as one of its viewers.
+                    UUID bubbleOwner = plugin.getBubbleManager().getOwnerByBubbleEntityId(entityId);
+                    if (bubbleOwner != null) {
+                        plugin.getBubbleManager().removeViewer(bubbleOwner, event.getUser().getUUID());
+                        continue;
+                    }
+
                     NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntityById(entityId);
 
                     if (nameTagEntity == null)
                         continue;
 
                     nameTagEntity.getPassenger().removeViewer(event.getUser());
+                    plugin.getBubbleManager().removeViewer(
+                            nameTagEntity.getBukkitEntity().getUniqueId(), event.getUser().getUUID());
                     SpectatorHead head = nameTagEntity.getStandin();
                     if (head != null) {
                         head.removeViewer(event.getUser().getUUID());

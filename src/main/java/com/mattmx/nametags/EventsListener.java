@@ -50,6 +50,8 @@ public class EventsListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
         UUID playerUuid = event.getPlayer().getUniqueId();
+        // Before the tag goes away, so the bubble can still resolve its owner's passenger list.
+        plugin.getBubbleManager().clear(playerUuid);
         plugin.getEntityManager().removeLastSentPassengersCache(event.getPlayer().getEntityId());
         // TODO(matt): might not be sending de-spawn packet to viewers all the time?
 
@@ -72,6 +74,10 @@ public class EventsListener implements Listener {
 
     @EventHandler
     public void onPlayerChangeWorld(@NotNull PlayerChangedWorldEvent event) {
+        // Viewers in the old world are dropped below, so a bubble mid-animation would be left
+        // mounted on nobody. Cheaper and less surprising to just end it.
+        plugin.getBubbleManager().clear(event.getPlayer());
+
         NameTagEntity nameTagEntity = plugin.getEntityManager().getNameTagEntity(event.getPlayer());
 
         if (nameTagEntity == null)
@@ -101,6 +107,8 @@ public class EventsListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
+        plugin.getBubbleManager().clear(event.getPlayer());
+
         NameTagEntity nameTagEntity = plugin.getEntityManager()
                 .getNameTagEntity(event.getPlayer());
 
@@ -158,6 +166,12 @@ public class EventsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onGameModeChange(@NotNull PlayerGameModeChangeEvent event) {
+        // Bubbles never ride the spectator stand-in head, so end one that is playing when its
+        // owner goes into spectator.
+        if (event.getNewGameMode() == GameMode.SPECTATOR) {
+            plugin.getBubbleManager().clear(event.getPlayer());
+        }
+
         if (!plugin.isSpectatorVisibleEnabled()) {
             return;
         }

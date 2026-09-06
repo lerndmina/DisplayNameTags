@@ -45,6 +45,9 @@ dependencies {
     implementation(libs.entitylib)
     implementation(libs.bstats)
 
+    // The typewriter engine and its tests are pure Adventure, which ships inside paper-api.
+    // compileOnly dependencies are not inherited by the test source set, so ask for it again.
+    testImplementation(libs.paper)
     testImplementation(libs.junit.jupiter)
     // Gradle 8.x ships an older platform launcher than junit-jupiter 5.13 expects;
     // pinning it here keeps the engine and launcher aligned.

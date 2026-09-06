@@ -102,6 +102,65 @@ defaults:
     strength: 0.5
     radius: 0.5
 
+# Chat speech bubbles.
+# When a player talks, their message is typed out character by character in a
+# second text display that rides above their nametag, holds long enough to be
+# read, fades and removes itself.
+#
+# The bubble is shown to exactly the people who can already see the player's
+# nametag, and never for a sender who is in spectator, vanished, invisible or
+# has had their nametag turned off by an admin. Messages that another plugin
+# cancelled (mute, chat filter, blocked word) never produce a bubble.
+#
+# Every key below has a built-in default, so the whole section can be deleted
+# and bubbles still work.
+bubbles:
+  enabled: true
+  # Longest message shown, counted in visible characters. Longer messages are
+  # cut at this point and an ellipsis is added.
+  max-chars: 120
+  # Height above the player. The nametag sits at 0.2 and one line of text is
+  # roughly 0.25 blocks tall, so 0.6 clears a single-line tag.
+  translate:
+    x: 0.0
+    y: 0.6
+    z: 0.0
+  # Same options as the defaults section above.
+  billboard: center
+  # Darker than the nametag background so the two read as separate things.
+  background: '#60000000'
+  line-width: 180
+  text-shadow: true
+  see-through: false
+  # Overall size multiplier. The fade shrinks the bubble from this value.
+  scale: 1.0
+  # Visual display range in blocks, or 'default' for the server's simulation
+  # distance.
+  range: default
+  # Typing and timing.
+  style:
+    # Characters revealed per tick. 2.0 is about 40 characters a second.
+    chars-per-tick: 2.0
+    # Extra ticks to wait after revealing a '.', '!', '?' or ellipsis.
+    sentence-pause-ticks: 6
+    # Extra ticks to wait after revealing a ',', ';' or ':'.
+    clause-pause-ticks: 3
+    # Glyph that blinks at the end of the text while typing. Leave empty for
+    # no cursor.
+    cursor: ▏
+    # Ticks the cursor spends visible, then hidden, while typing.
+    cursor-blink-ticks: 6
+    # How long the finished message is held: a flat base plus an amount per
+    # character, clamped between the min and max.
+    hold-base-ticks: 40
+    hold-per-char-ticks: 1.5
+    hold-min-ticks: 40
+    hold-max-ticks: 300
+    # Ticks spent fading out before the bubble is removed.
+    fade-ticks: 10
+    # Reserved for a typing sound cue. 0 disables it; nothing plays it yet.
+    sound-every-chars: 0
+
 # Should the player see their own tag?
 # This is not entirely supported, but bug reports still help
 show-self: false

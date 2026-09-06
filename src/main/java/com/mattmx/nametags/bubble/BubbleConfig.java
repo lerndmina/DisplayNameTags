@@ -15,10 +15,12 @@ import org.jetbrains.annotations.Nullable;
  * Everything the {@code bubbles} config section controls: whether bubbles are on at all, how much
  * of a chat line is shown, how the display entity looks, and the typewriter timings.
  *
- * <p>Every value has a hard-coded default, so a server whose config.yml predates this feature (no
- * {@code bubbles} section at all) still gets working bubbles. The render keys are layered: the
- * defaults below are written onto the meta first, then {@link TextDisplayMetaConfiguration#applyMeta}
- * lets the config override any key it actually declares.
+ * <p>Every value has a hard-coded default. Bubbles are off by default (parked in favour of
+ * ThirdPlaceMcTweaks' speak rider bubbles), so a server whose config.yml predates this feature (no
+ * {@code bubbles} section at all) stays off too, unless {@code bubbles.enabled} is explicitly set
+ * to {@code true}. The render keys are layered: the defaults below are written onto the meta
+ * first, then {@link TextDisplayMetaConfiguration#applyMeta} lets the config override any key it
+ * actually declares.
  */
 public final class BubbleConfig {
 
@@ -65,7 +67,7 @@ public final class BubbleConfig {
                 getInt(styleSection, "sound-every-chars", 0));
 
         return new BubbleConfig(
-                section == null || section.getBoolean("enabled", true),
+                section != null && section.getBoolean("enabled", false),
                 section == null ? 120 : section.getInt("max-chars", 120),
                 section == null ? 1.0f : (float) section.getDouble("scale", 1.0),
                 style,

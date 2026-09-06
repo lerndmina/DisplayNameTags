@@ -32,7 +32,7 @@ public final class BubbleChatListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChat(@NotNull AsyncChatEvent event) {
-        if (!plugin.getConfig().getBoolean("bubbles.enabled", true)) {
+        if (!plugin.getConfig().getBoolean("bubbles.enabled", false)) {
             return;
         }
 

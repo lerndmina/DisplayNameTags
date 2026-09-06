@@ -105,7 +105,10 @@ public class NameTags extends JavaPlugin {
         VanishEventListener.inject(this);
 
         Bukkit.getPluginManager().registerEvents(eventsListener, this);
-        Bukkit.getPluginManager().registerEvents(bubbleChatListener, this);
+        boolean bubblesEnabled = getConfig().getBoolean("bubbles.enabled", false);
+        if (bubblesEnabled) {
+            Bukkit.getPluginManager().registerEvents(bubbleChatListener, this);
+        }
         Bukkit.getPluginManager().registerEvents(new com.mattmx.nametags.packet.TameableInteractionFix(), this);
         Bukkit.getScheduler().runTaskLater(this, DependencyVersionChecker::checkPacketEventsVersion, 10L);
 
@@ -124,7 +127,9 @@ public class NameTags extends JavaPlugin {
         // the current visibility policy and catches missed transitions.
         Bukkit.getScheduler().runTaskTimer(this, this::reconcileViewers, 20L, 20L);
 
-        bubbleManager.start();
+        if (bubblesEnabled) {
+            bubbleManager.start();
+        }
     }
 
     @Override

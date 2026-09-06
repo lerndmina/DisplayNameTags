@@ -112,10 +112,14 @@ defaults:
 # has had their nametag turned off by an admin. Messages that another plugin
 # cancelled (mute, chat filter, blocked word) never produce a bubble.
 #
+# Off by default. This feature has moved to ThirdPlaceMcTweaks' speak rider
+# bubbles; the code stays here for reference but nothing is registered or
+# scheduled unless this is turned back on.
+#
 # Every key below has a built-in default, so the whole section can be deleted
 # and bubbles still work.
 bubbles:
-  enabled: true
+  enabled: false
   # Longest message shown, counted in visible characters. Longer messages are
   # cut at this point and an ellipsis is added.
   max-chars: 120

@@ -141,16 +141,30 @@ public final class BubbleManager {
     }
 
     /**
-     * Appends {@code owner}'s bubble entity id to a passenger list if they have a live bubble.
-     * Returns the array it was given when there is nothing to add, so the common case allocates
-     * nothing. Safe to call from a netty thread.
+     * Appends {@code owner}'s bubble entity id to a passenger list bound for {@code viewer}.
+     *
+     * <p>The id is only added when that viewer has actually been sent the bubble's spawn packet.
+     * A tag viewer who never received the bubble (a stand-in transition, or a vanilla tracker
+     * re-send that arrives before the bubble is attached) would otherwise be told to mount an
+     * entity id it has never seen, and nothing later corrects it.
+     *
+     * <p>Returns the array it was given when there is nothing to add, so the common case
+     * allocates nothing. Read-only, so it is safe to call from a netty thread.
      */
-    public int[] withBubble(@NotNull UUID owner, int @NotNull [] passengers) {
-        SpeechBubble bubble = active.get(owner);
-        if (bubble == null) {
+    public int[] withBubble(@NotNull UUID owner, @Nullable UUID viewer, int @NotNull [] passengers) {
+        if (viewer == null) {
             return passengers;
         }
 
+        SpeechBubble bubble = active.get(owner);
+        if (bubble == null || !bubble.getEntity().hasViewer(viewer)) {
+            return passengers;
+        }
+
+        return appendBubbleId(bubble, passengers);
+    }
+
+    private static int[] appendBubbleId(@NotNull SpeechBubble bubble, int @NotNull [] passengers) {
         final int bubbleId = bubble.getEntityId();
         for (int passenger : passengers) {
             if (passenger == bubbleId) {
@@ -221,7 +235,8 @@ public final class BubbleManager {
         }
 
         int ownerEntityId = tag.getBukkitEntity().getEntityId();
-        int[] passengers = withBubble(bubble.getOwner(), tag.currentPassengerIds());
+        // Everyone this array is sent to was just added as a viewer above, so the id always belongs.
+        int[] passengers = appendBubbleId(bubble, tag.currentPassengerIds());
         plugin.getEntityManager().setLastSentPassengers(ownerEntityId, passengers);
         sendPassengers(ownerEntityId, passengers, bubble.getViewers());
     }

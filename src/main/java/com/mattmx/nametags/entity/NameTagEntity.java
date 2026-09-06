@@ -145,10 +145,14 @@ public class NameTagEntity {
                 .getLastSentPassengers(getBukkitEntity().getEntityId())
                 .orElseGet(this::currentPassengerIds);
 
-        // A speech bubble rides alongside the tag, so it has to be in the same packet.
+        // A speech bubble rides alongside the tag, so it has to be in the same packet, but only
+        // for a viewer that has already been sent the bubble.
         previousPackets = NameTags.getInstance()
                 .getBubbleManager()
-                .withBubble(bukkitEntity.getUniqueId(), previousPackets);
+                .withBubble(
+                        bukkitEntity.getUniqueId(),
+                        viewer == null ? null : viewer.getUniqueId(),
+                        previousPackets);
 
         return new WrapperPlayServerSetPassengers(bukkitEntity.getEntityId(), previousPackets);
     }

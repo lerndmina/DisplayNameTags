@@ -55,9 +55,14 @@ public class EventsListener implements Listener {
         plugin.getEntityManager().removeLastSentPassengersCache(event.getPlayer().getEntityId());
         // TODO(matt): might not be sending de-spawn packet to viewers all the time?
 
-        // Remove as a viewer from all entities
+        // Remove as a viewer from all entities, tags and any bubbles alike, so a bubble that is
+        // still playing above someone else does not keep sending packets to a gone player.
         for (final NameTagEntity entity : plugin.getEntityManager().getAllEntities()) {
+            if (entity == null) {
+                continue;
+            }
             entity.getPassenger().removeViewer(playerUuid);
+            plugin.getBubbleManager().removeViewer(entity.getBukkitEntity().getUniqueId(), playerUuid);
         }
 
         NameTagEntity entity = plugin.getEntityManager().removeEntity(event.getPlayer());

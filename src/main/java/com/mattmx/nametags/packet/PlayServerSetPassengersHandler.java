@@ -60,9 +60,13 @@ public class PlayServerSetPassengersHandler {
         }
 
         // An active speech bubble is a second passenger on the same player, so it has to ride
-        // along in the same packet or the client will unmount it.
+        // along in the same packet or the client will unmount it. Only for a viewer that has
+        // already been sent the bubble.
         int[] withBubble = plugin.getBubbleManager()
-                .withBubble(nameTagEntity.getBukkitEntity().getUniqueId(), passengers);
+                .withBubble(
+                        nameTagEntity.getBukkitEntity().getUniqueId(),
+                        viewer.getUniqueId(),
+                        passengers);
 
         if (withBubble != passengers) {
             passengers = withBubble;
